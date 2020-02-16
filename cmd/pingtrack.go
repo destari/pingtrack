@@ -160,6 +160,8 @@ var data Data
 func main() {
 	echoTimes := 10
 	hosts := []string{}
+	serveHost := "127.0.0.1"
+	servePort := "8080"
 
 	var cmdPrint = &cobra.Command{
 		Use:   "hosts [hosts to ping]",
@@ -210,7 +212,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler:      handler,
-		Addr:         "127.0.0.1:8080",
+		Addr:         serveHost+":"+servePort,
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
@@ -249,6 +251,6 @@ func main() {
 
 	go pinger(c, resq)
 
-	fmt.Println("Starting HTTP server..")
+	fmt.Println("Starting HTTP server: " + serveHost+":"+servePort)
 	go log.Fatal(srv.ListenAndServe())
 }
