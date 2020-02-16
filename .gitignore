@@ -1,3 +1,5 @@
 /.idea
 /cmd/.genstatic_gen
 /cmd/pingtrack
+/cmd/.web_static
+/cmd/handlers
