@@ -11,6 +11,7 @@ class IndexPage extends Component {
         super(props);
         this.state = {
             allStats: {},
+            hosts: [],
             selected: ""
         }
     }
@@ -21,12 +22,14 @@ class IndexPage extends Component {
         that we can reference later.
     */
     intervalID;
+    intervalIDHosts;
 
     componentDidMount() {
         /*
           need to make the initial call to getData() to populate
          data right away
         */
+        this.getHosts();
         this.getData();
 
         /*
@@ -35,6 +38,7 @@ class IndexPage extends Component {
           to the interval so we can clear it later.
         */
         this.intervalID = setInterval(this.getData.bind(this), 5000);
+        this.intervalIDHosts = setInterval(this.getHosts.bind(this), 5000);
     }
 
     componentWillUnmount() {
@@ -43,6 +47,9 @@ class IndexPage extends Component {
           after unmounting this component
         */
         clearInterval(this.intervalID);
+
+        // Uncomment if we want to stop fetching hosts:
+        //clearInterval(this.intervalIDHosts);
     }
 
     getData = () => {
@@ -85,24 +92,63 @@ class IndexPage extends Component {
             })
     }
 
-
+    getHosts = () => {
+        let config = {
+            headers: {'Access-Control-Allow-Origin': '*',
+                'Accept': 'application/json'}
+        };
+        Axios
+            .get(`/api/hosts/`, config)
+            .then(response => {
+                /*
+                console.log(response.data);
+                console.log(response.status);
+                console.log(response.statusText);
+                console.log(response.headers);
+                console.log(response.config);
+                */
+                console.log(response.data);
+                this.setState({ hosts: response.data });
+            })
+            .catch(error => {
+                if (error.response) {
+                    // The request was made and the server responded with a status code
+                    // that falls out of the range of 2xx
+                    console.log(error.response.data);
+                    console.log(error.response.status);
+                    console.log(error.response.headers);
+                } else if (error.request) {
+                    // The request was made but no response was received
+                    // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+                    // http.ClientRequest in node.js
+                    console.log(error.request);
+                } else {
+                    // Something happened in setting up the request that triggered an Error
+                    console.log('Error', error.message);
+                }
+                console.log(error.config);
+                //this.setState({ loading: false, error })
+            })
+    }
 
 
     render() {
         const selected = (hostname) => {
-
             this.setState({ selected: hostname })
         }
 
         const makeMenu = () => {
-            return (
-                Object.keys(this.state.allStats.Results ? this.state.allStats.Results : {}).map(function (hostname) {
+            if (this.state.hosts) {
+                const menuItems = this.state.hosts.map(function (hostname) {
                     return (
                         <Menu.List.Item key={hostname} onClick={() => {selected(hostname)}}>{hostname}</Menu.List.Item>
                     )
-                })
-            )
-        }
+                });
+                return menuItems;
+            } else {
+                return null;
+            }
+        };
 
         return (
             <Layout>
