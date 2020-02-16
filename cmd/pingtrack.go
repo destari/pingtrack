@@ -130,6 +130,7 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path = filepath.Join(h.staticPath, path)
 
 	// check whether a file exists at the given path
+	/*
 	_, err = os.Stat(path)
 	if os.IsNotExist(err) {
 		// file does not exist, serve index.html
@@ -141,6 +142,8 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	 */
 
 	statikFS, err := fs.New()
 	if err != nil {

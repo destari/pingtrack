@@ -1,1 +1,3 @@
 /.idea
+/cmd/.genstatic_gen
+/cmd/pingtrack
