@@ -1,4 +1,5 @@
 package main
+//go:generate statik -f -src=../web/public/ -dest=./internal/
 
 import (
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sparrc/go-ping"
 	"github.com/spf13/cobra"
+	_ "github.com/destari/pingtrack/cmd/internal/statik"
 )
 
 type Results struct {
@@ -138,6 +140,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/api/hosts/", HostsHandler)
+	//r.Methods("GET", "POST", "DELETE", "HEAD", "OPTIONS", "PUT")
 	r.HandleFunc("/api/data/", DataHandler)
 	r.HandleFunc("/api/data/{hostname}/", DataHandler)
 

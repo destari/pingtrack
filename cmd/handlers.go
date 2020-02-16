@@ -1,10 +1,12 @@
 package main
-//go:generate statik -f -src=../web/public/ -dest=./internal/
+
 
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -26,16 +28,64 @@ func DataHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func HostsHandler(w http.ResponseWriter, r *http.Request) {
-	keys := []string{}
+	//keys := []string{}
+
+	if r.Method == "POST" {
+		body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
+		if err != nil {
+			panic(err)
+		}
+		if err := r.Body.Close(); err != nil {
+			panic(err)
+		}
+
+		var newHost string
+		if err := json.Unmarshal(body, &newHost); err != nil {
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.WriteHeader(422) // unprocessable entity
+			if err := json.NewEncoder(w).Encode(err); err != nil {
+				panic(err)
+			}
+		}
+
+		hosts = append(hosts, newHost)
+	} else if r.Method == "DELETE" {
+		body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
+		if err != nil {
+			panic(err)
+		}
+		if err := r.Body.Close(); err != nil {
+			panic(err)
+		}
+
+		var removeHost string
+		if err := json.Unmarshal(body, &removeHost); err != nil {
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.WriteHeader(422) // unprocessable entity
+			if err := json.NewEncoder(w).Encode(err); err != nil {
+				panic(err)
+			}
+		}
+
+		tmpHosts := []string{}
+		for _, h := range hosts {
+			if h != removeHost {
+				tmpHosts = append(tmpHosts, h)
+			}
+		}
+		hosts = tmpHosts
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
+	/*
 	for k := range data.Results {
 		keys = append(keys, k)
 	}
+	*/
 
-	jsonResults, _ := json.Marshal(keys)
+	jsonResults, _ := json.Marshal(hosts)
 	w.Write(jsonResults)
 }
 
