@@ -84,13 +84,13 @@ func pinger(queue chan string, output chan Results) {
 }
 
 var data Data
+var hosts []string
+var echoTimes int
+var serveHost string
+var servePort string
+var rootCmd = &cobra.Command{Use: "pingtrack"}
 
-func main() {
-	echoTimes := 10
-	hosts := []string{}
-	serveHost := "127.0.0.1"
-	servePort := "8080"
-
+func init() {
 	var cmdPrint = &cobra.Command{
 		Use:   "hosts [hosts to ping]",
 		Short: "Pings and tracks the list of hosts.",
@@ -102,10 +102,23 @@ func main() {
 		},
 	}
 
-	cmdPrint.Flags().IntVarP(&echoTimes, "interval", "i", 1, "Time in seconds between pings")
+	rootCmd.PersistentFlags().IntVarP(&echoTimes, "interval", "i", 10, "Time in seconds between pings")
+	rootCmd.PersistentFlags().StringVarP(&serveHost, "bindhost", "H", "127.0.0.1", "Local host/IP to bind web server to")
+	rootCmd.PersistentFlags().StringVarP(&servePort, "bindport", "p", "8080", "Port to bind web server to")
 
-	var rootCmd = &cobra.Command{Use: "pingtrack"}
 	rootCmd.AddCommand(cmdPrint)
+}
+
+func main() {
+	hosts = []string{}
+
+
+
+
+	//cmdPrint.Flags().IntVarP(&echoTimes, "interval", "i", 1, "Time in seconds between pings")
+
+
+
 	rootCmd.Execute()
 
 

@@ -13,4 +13,4 @@ clean:
 	go generate $(GOFILES) && touch .genstatic_gen
 
 pingtrack: $(GOFILES) .genstatic_gen
-	go build $(GOFILES)
+	go build -o pingtrack $(GOFILES)
