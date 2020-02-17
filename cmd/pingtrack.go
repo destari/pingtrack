@@ -140,6 +140,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/api/hosts/", HostsHandler)
+	r.HandleFunc("/api/hosts/{hostname}", HostsHandler).Methods("DELETE")
 	//r.Methods("GET", "POST", "DELETE", "HEAD", "OPTIONS", "PUT")
 	r.HandleFunc("/api/data/", DataHandler)
 	r.HandleFunc("/api/data/{hostname}/", DataHandler)
@@ -159,8 +160,8 @@ func main() {
 		Handler:      handler,
 		Addr:         serveHost+":"+servePort,
 		// Good practice: enforce timeouts for servers you create!
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+		//WriteTimeout: 15 * time.Second,
+		//ReadTimeout:  15 * time.Second,
 	}
 
 	go func() {
