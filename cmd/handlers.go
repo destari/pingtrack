@@ -72,16 +72,16 @@ func HostsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		hosts = append(hosts, payload["hostname"])
+		config.hosts = append(config.hosts, payload["hostname"])
 	} else if r.Method == "DELETE" {
 
 		tmpHosts := []string{}
-		for _, h := range hosts {
+		for _, h := range config.hosts {
 			if h != removeHost {
 				tmpHosts = append(tmpHosts, h)
 			}
 		}
-		hosts = tmpHosts
+		config.hosts = tmpHosts
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -93,7 +93,7 @@ func HostsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	*/
 
-	jsonResults, _ := json.Marshal(hosts)
+	jsonResults, _ := json.Marshal(config.hosts)
 	w.Write(jsonResults)
 }
 

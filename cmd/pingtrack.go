@@ -19,7 +19,6 @@ import (
 
 type Results struct {
 	Host string
-	IP string
 	MinRtt time.Duration
 	AvgRtt time.Duration
 	MaxRtt time.Duration
@@ -52,13 +51,15 @@ func pingHost(host string) Results {
 		}
 	}()
 
+	/*
 	pinger.OnRecv = func(pkt *ping.Packet) {
 		res.IP = pkt.IPAddr.String()
 	}
+	*/
 
 	pinger.OnFinish = func(stats *ping.Statistics) {
 		res.PacketLoss = stats.PacketLoss
-		res.IP = stats.IPAddr.String()
+		//res.IP = stats.IPAddr.String()
 		res.MinRtt = stats.MinRtt
 		res.AvgRtt = stats.AvgRtt
 		res.MaxRtt = stats.MaxRtt
@@ -78,16 +79,48 @@ func pinger(queue chan string, output chan Results) {
 	for {
 		select {
 		case host := <- queue:
-			//fmt.Println("Pinging")
 			res := pingHost(host)
 			output <- res
 		}
 	}
 }
 
+func fillQueue(queue chan string) {
+	fmt.Println("Periodic queue filler started")
+	tick := time.Tick(time.Duration(config.echoTimes) * time.Second)
+
+	for {
+		select {
+		case <-tick:
+			for _, testHost := range config.hosts {
+				queue <- testHost
+			}
+		}
+	}
+}
+
+func resultsReader(resq chan Results) {
+	fmt.Println("Starting results reader")
+	for {
+		select {
+		case result := <- resq:
+			host := result.Host
+			result.Host = ""
+			data.Results[host] = append(data.Results[host], result)
+		default:
+			time.Sleep(250 * time.Millisecond)
+		}
+	}
+}
+
+type Config struct {
+	hosts []string
+	echoTimes int
+}
+
+var config Config
+
 var data Data
-var hosts []string
-var echoTimes int
 var serveHost string
 var servePort string
 var rootCmd = &cobra.Command{Use: "pingtrack"}
@@ -100,11 +133,12 @@ func init() {
 		Args: cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Hosts: " + strings.Join(args, ", "))
-			hosts = args
+			//hosts = args
+			config.hosts = args
 		},
 	}
 
-	rootCmd.PersistentFlags().IntVarP(&echoTimes, "interval", "i", 10, "Time in seconds between pings")
+	rootCmd.PersistentFlags().IntVarP(&config.echoTimes, "interval", "i", 10, "Time in seconds between pings")
 	rootCmd.PersistentFlags().StringVarP(&serveHost, "bindhost", "H", "127.0.0.1", "Local host/IP to bind web server to")
 	rootCmd.PersistentFlags().StringVarP(&servePort, "bindport", "p", "8080", "Port to bind web server to")
 
@@ -112,13 +146,11 @@ func init() {
 }
 
 func main() {
-	hosts = []string{}
+	config.hosts = []string{}
 
 	rootCmd.Execute()
 
-	tick := time.Tick(time.Duration(echoTimes) * time.Second)
-
-	if len(hosts) == 0 {
+	if len(config.hosts) == 0 {
 		fmt.Println("NO HOSTS!")
 		return
 	}
@@ -154,37 +186,8 @@ func main() {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	go func() {
-		fmt.Println("Starting results reader")
-		for {
-			select {
-			case result := <- resq:
-				data.Results[result.Host] = append(data.Results[result.Host], result)
-			default:
-				time.Sleep(1 * time.Second)
-			}
-		}
-	}()
-
-	/*
-	fmt.Println("Filling initial queue.")
-	for _, testHost := range hosts {
-		c <- testHost
-	}
-	*/
-
-	go func() {
-		fmt.Println("Periodic queue")
-		for {
-			select {
-			case <-tick:
-				for _, testHost := range hosts {
-					c <- testHost
-				}
-			}
-		}
-	}()
-
+	go resultsReader(resq)
+	go fillQueue(c)
 	go pinger(c, resq)
 
 	fmt.Println("Starting HTTP server: " + serveHost+":"+servePort)
