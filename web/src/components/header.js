@@ -18,6 +18,7 @@ export default (props) => (
             <Navbar.Segment align="end">
                 <Navbar.Item href="/about/">About</Navbar.Item>
                 <Navbar.Item href="/contact/">Contact</Navbar.Item>
+                <Navbar.Item href="/settings/">Settings</Navbar.Item>
             </Navbar.Segment>
         </Navbar.Menu>
     </Navbar>

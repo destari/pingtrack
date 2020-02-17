@@ -1,4 +1,4 @@
-import React, { Component} from "react"
+import React, { Component } from "react"
 import "rbx/index.css"
 import {Column, Menu} from "rbx";
 import Layout from "../components/layout"
