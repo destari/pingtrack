@@ -3,14 +3,14 @@ import "rbx/index.css"
 import {Container, Notification, Table} from "rbx";
 import {ColumnChart, LineChart} from 'react-chartkick'
 import 'chart.js'
+import Axios from "axios";
 
-function DataGraph(props) {
+function DataTable(props) {
 
-    if (props.data.Results) {
-        let data = props.data.Results;
-        let hostname = props.hostname;
+    if (props.data) {
+        let data = props.data;
 
-        return data[hostname].map(function (d) {
+        const dataTable = data.map(function (d) {
             return (
                 <Table.Row key={d.Time}>
                     <Table.Cell>{d.Time}</Table.Cell>
@@ -21,6 +21,7 @@ function DataGraph(props) {
                 </Table.Row>
             )
         });
+        return dataTable;
     } else {
         return (
             <tr><td>Loading...</td><td>Loading...</td></tr>
@@ -58,32 +59,113 @@ function dataTwist(inputData) {
 }
 
 class DataView extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            hostStats: [],
+            data: [],
+            packetLoss: [],
+            hostname: props.host
+        }
+    }
+
+    intervalID;
     Results;
 
+    updateHostname = (newHostname) => {
+        this.setState({hostStats: [], data: [], packetLoss: []});
+        this.setState({hostname: newHostname});
+        this.getData();
+    };
+
+    componentDidMount() {
+        this.getData();
+        this.intervalID = setInterval(this.getData.bind(this), 15000);
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.intervalID);
+    }
+
+    getData = () => {
+        if (this.state.hostname === "") {
+            return
+        }
+        var config = {
+            headers: {'Access-Control-Allow-Origin': '*',
+                'Accept': 'application/json'}
+        };
+
+        console.log("getData called: /api/data/" + this.state.hostname)
+        Axios
+            .get(`/api/data/`+this.state.hostname, config)
+            .then(response => {
+                /*
+                console.log(response.data);
+                console.log(response.status);
+                console.log(response.statusText);
+                console.log(response.headers);
+                console.log(response.config);
+                */
+
+                //console.log(response.data)
+                this.setState({ hostStats: response.data.slice(-100, -1) });
+                let [tmpData, packetLoss] = dataTwist(this.state.hostStats);
+                this.setState({ data: tmpData });
+                this.setState({ packetLoss: packetLoss });
+            })
+            .catch(error => {
+                if (error.response) {
+                    // The request was made and the server responded with a status code
+                    // that falls out of the range of 2xx
+                    console.log(error.response.data);
+                    console.log(error.response.status);
+                    console.log(error.response.headers);
+                } else if (error.request) {
+                    // The request was made but no response was received
+                    // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+                    // http.ClientRequest in node.js
+                    console.log(error.request);
+                } else {
+                    // Something happened in setting up the request that triggered an Error
+                    console.log('Error', error.message);
+                }
+                console.log(error.config);
+                //this.setState({ loading: false, error })
+            })
+    }
 
     render() {
+        /*
+                let data;
+                let packetLoss;
 
-        let data;
-        let packetLoss;
+                if (this.state.data) {
+                    data = this.state.data;
+                    packetLoss = this.state.packetLoss;
+                } else {
+                    data = [];
+                    packetLoss = [];
+                }
 
-        if (this.props.data && this.props.data.Results) {
-            [data, packetLoss] = dataTwist(this.props.data.Results[this.props.host]);
-        } else {
-            data = [];
-            packetLoss = [];
-        }
-
+                if (this.state.hostStats) {
+                    [data, packetLoss] = dataTwist(this.state.hostStats);
+                } else {
+                    data = [];
+                    packetLoss = [];
+                }
+        */
         return (
             <div>
                 <Container fluid>
                     <Notification>
-                        Viewing: <strong>{this.props.host}</strong>
+                        Viewing: <strong>{this.state.hostname}</strong>
                     </Notification>
                 </Container>
 
                 <div>
                     <LineChart
-                        data={data}
+                        data={this.state.data}
                         height="500px"
                         legend={true}
                         precision={4}
@@ -94,7 +176,7 @@ class DataView extends React.Component {
                     />
 
                     <ColumnChart
-                        data={packetLoss}
+                        data={this.state.packetLoss}
                         height="200px"
                         min={0} max={100}
                         legend={true}
@@ -116,7 +198,7 @@ class DataView extends React.Component {
                         </Table.Head>
 
                         <Table.Body>
-                            <DataGraph data={this.props.data} hostname={this.props.host}/>
+                            <DataTable data={this.state.hostStats} host={this.state.hostname}/>
                         </Table.Body>
                     </Table>
                 </div>

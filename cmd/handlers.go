@@ -26,6 +26,22 @@ func DataHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func HostDataHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	w.Header().Set("Content-Type", "application/json")
+
+	if vars["hostname"] != "" {
+		w.WriteHeader(http.StatusOK)
+		jsonResults, _ := json.Marshal(data.Results[vars["hostname"]])
+		w.Write(jsonResults)
+	} else {
+		w.WriteHeader(422)
+		//jsonResults, _ := json.Marshal([""])
+		//w.Write(jsonResults)
+	}
+}
+
+
 func HostsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	removeHost := ""

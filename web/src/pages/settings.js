@@ -135,15 +135,6 @@ class Settings extends Component {
 
     render() {
 
-        const removeHost = hostname => e => {
-            console.log(e)
-            console.log(hostname)
-            e.preventDefault();
-            this.deleteHost(hostname)
-        }
-
-
-
         const HostsTable = (my) => {
             if (my.state.hosts) {
                 const tableItems = my.state.hosts.map(function (hostname) {

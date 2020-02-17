@@ -114,15 +114,7 @@ func init() {
 func main() {
 	hosts = []string{}
 
-
-
-
-	//cmdPrint.Flags().IntVarP(&echoTimes, "interval", "i", 1, "Time in seconds between pings")
-
-
-
 	rootCmd.Execute()
-
 
 	tick := time.Tick(time.Duration(echoTimes) * time.Second)
 
@@ -130,7 +122,6 @@ func main() {
 		fmt.Println("NO HOSTS!")
 		return
 	}
-
 
 	data.Time = time.Now().Unix()
 	data.Results = make(map[string][]Results)
@@ -141,9 +132,8 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/api/hosts/", HostsHandler)
 	r.HandleFunc("/api/hosts/{hostname}", HostsHandler).Methods("DELETE")
-	//r.Methods("GET", "POST", "DELETE", "HEAD", "OPTIONS", "PUT")
+	r.HandleFunc("/api/data/{hostname}", HostDataHandler)
 	r.HandleFunc("/api/data/", DataHandler)
-	r.HandleFunc("/api/data/{hostname}/", DataHandler)
 
 	spa := spaHandler{staticPath: "../web/public", indexPath: "index.html"}
 	r.PathPrefix("/").Handler(spa)
@@ -160,8 +150,8 @@ func main() {
 		Handler:      handler,
 		Addr:         serveHost+":"+servePort,
 		// Good practice: enforce timeouts for servers you create!
-		//WriteTimeout: 15 * time.Second,
-		//ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
 	}
 
 	go func() {
