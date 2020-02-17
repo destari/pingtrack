@@ -1,6 +1,6 @@
 import React from "react"
 import "rbx/index.css"
-import {Table, Container, Notification} from "rbx";
+import {Container, Notification, Table} from "rbx";
 import {ColumnChart, LineChart} from 'react-chartkick'
 import 'chart.js'
 
@@ -10,19 +10,17 @@ function DataGraph(props) {
         let data = props.data.Results;
         let hostname = props.hostname;
 
-        const dataBlob = data[hostname].map(function (d) {
+        return data[hostname].map(function (d) {
             return (
                 <Table.Row key={d.Time}>
                     <Table.Cell>{d.Time}</Table.Cell>
-                    <Table.Cell>{d.MinRtt/1000000} ms</Table.Cell>
-                    <Table.Cell>{d.AvgRtt/1000000} ms</Table.Cell>
-                    <Table.Cell>{d.MaxRtt/1000000} ms</Table.Cell>
+                    <Table.Cell>{d.MinRtt / 1000000} ms</Table.Cell>
+                    <Table.Cell>{d.AvgRtt / 1000000} ms</Table.Cell>
+                    <Table.Cell>{d.MaxRtt / 1000000} ms</Table.Cell>
                     <Table.Cell>{d.PacketLoss} %</Table.Cell>
                 </Table.Row>
             )
         });
-
-        return dataBlob;
     } else {
         return (
             <tr><td>Loading...</td><td>Loading...</td></tr>
@@ -31,26 +29,26 @@ function DataGraph(props) {
 }
 
 function dataTwist(inputData) {
-    let outputData = []
-    let packetLoss = []
+    let outputData = [];
+    let packetLoss = [];
 
     if (inputData) {
 
-        let series = {}
-        let seriesMax = {}
-        let seriesMin = {}
-        let seriesLoss = {}
+        let series = {};
+        let seriesMax = {};
+        let seriesMin = {};
+        let seriesLoss = {};
         inputData.forEach( function (datum) {
-            series[datum.Time] = datum.AvgRtt/1000000
-            seriesMax[datum.Time] = datum.MaxRtt/1000000
-            seriesMin[datum.Time] = datum.MinRtt/1000000
+            series[datum.Time] = datum.AvgRtt/1000000;
+            seriesMax[datum.Time] = datum.MaxRtt/1000000;
+            seriesMin[datum.Time] = datum.MinRtt/1000000;
             seriesLoss[datum.Time] = datum.PacketLoss
             }
-        )
+        );
 
-        outputData.push({"name": "Avg RTT", "data": series})
-        outputData.push({"name": "Min RTT", "data": seriesMin})
-        outputData.push({"name": "Max RTT", "data": seriesMax})
+        outputData.push({"name": "Avg RTT", "data": series});
+        outputData.push({"name": "Min RTT", "data": seriesMin});
+        outputData.push({"name": "Max RTT", "data": seriesMax});
 
         packetLoss.push({"name": "Packet Loss", "data": seriesLoss})
 
@@ -60,6 +58,7 @@ function dataTwist(inputData) {
 }
 
 class DataView extends React.Component {
+    Results;
 
 
     render() {
