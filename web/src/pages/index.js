@@ -156,7 +156,7 @@ class IndexPage extends Component {
                     </Column>
                     <Column>
                         {this.state.selected ? (
-                            <DataView host={this.state.selected} ref={this.dataViewElement}> </DataView>
+                            <DataView host={this.state.selected} config={this.state.config} ref={this.dataViewElement}> </DataView>
                         ) : (
                             <Dashboard config={this.state.config}/>
                         )}

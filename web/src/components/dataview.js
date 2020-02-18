@@ -65,7 +65,8 @@ class DataView extends React.Component {
             hostStats: [],
             data: [],
             packetLoss: [],
-            hostname: props.host
+            hostname: props.host,
+            refresh: props.config.EchoTimes
         }
     }
 
