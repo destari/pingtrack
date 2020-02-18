@@ -3,7 +3,7 @@ import Header from "./header";
 
 export default ({ children }) => (
     <div>
-        <Header headerText="Pinger" />
+        <Header headerText="Pingtrack" />
 
         {children}
     </div>

@@ -13,6 +13,14 @@ import (
 	_ "github.com/destari/pingtrack/cmd/internal/statik"
 )
 
+func ConfigHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	jsonResults, _ := json.Marshal(config)
+	w.Write(jsonResults)
+}
+
 func DataHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	w.Header().Set("Content-Type", "application/json")
@@ -72,16 +80,16 @@ func HostsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		config.hosts = append(config.hosts, payload["hostname"])
+		config.Hosts = append(config.Hosts, payload["hostname"])
 	} else if r.Method == "DELETE" {
 
 		tmpHosts := []string{}
-		for _, h := range config.hosts {
+		for _, h := range config.Hosts {
 			if h != removeHost {
 				tmpHosts = append(tmpHosts, h)
 			}
 		}
-		config.hosts = tmpHosts
+		config.Hosts = tmpHosts
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -93,7 +101,7 @@ func HostsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	*/
 
-	jsonResults, _ := json.Marshal(config.hosts)
+	jsonResults, _ := json.Marshal(config.Hosts)
 	w.Write(jsonResults)
 }
 

@@ -57,18 +57,19 @@ func pingHost(host string) Results {
 	}
 	*/
 
+	pinger.Count = 4
+	pinger.Interval = time.Millisecond*100
+	pinger.Timeout = time.Second*2
+	pinger.SetPrivileged(false)
+
 	pinger.OnFinish = func(stats *ping.Statistics) {
 		res.PacketLoss = stats.PacketLoss
 		//res.IP = stats.IPAddr.String()
 		res.MinRtt = stats.MinRtt
 		res.AvgRtt = stats.AvgRtt
 		res.MaxRtt = stats.MaxRtt
+		config.PingCount += pinger.Count // stats
 	}
-
-	pinger.Count = 4
-	pinger.Interval = time.Millisecond*100
-	pinger.Timeout = time.Second*2
-	pinger.SetPrivileged(false)
 
 	pinger.Run()
 	return res
@@ -87,12 +88,12 @@ func pinger(queue chan string, output chan Results) {
 
 func fillQueue(queue chan string) {
 	fmt.Println("Periodic queue filler started")
-	tick := time.Tick(time.Duration(config.echoTimes) * time.Second)
+	tick := time.Tick(time.Duration(config.EchoTimes) * time.Second)
 
 	for {
 		select {
 		case <-tick:
-			for _, testHost := range config.hosts {
+			for _, testHost := range config.Hosts {
 				queue <- testHost
 			}
 		}
@@ -114,8 +115,9 @@ func resultsReader(resq chan Results) {
 }
 
 type Config struct {
-	hosts []string
-	echoTimes int
+	Hosts     []string
+	EchoTimes int
+	PingCount int
 }
 
 var config Config
@@ -134,11 +136,11 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Hosts: " + strings.Join(args, ", "))
 			//hosts = args
-			config.hosts = args
+			config.Hosts = args
 		},
 	}
 
-	rootCmd.PersistentFlags().IntVarP(&config.echoTimes, "interval", "i", 10, "Time in seconds between pings")
+	rootCmd.PersistentFlags().IntVarP(&config.EchoTimes, "interval", "i", 10, "Time in seconds between pings")
 	rootCmd.PersistentFlags().StringVarP(&serveHost, "bindhost", "H", "127.0.0.1", "Local host/IP to bind web server to")
 	rootCmd.PersistentFlags().StringVarP(&servePort, "bindport", "p", "8080", "Port to bind web server to")
 
@@ -146,11 +148,11 @@ func init() {
 }
 
 func main() {
-	config.hosts = []string{}
+	config.Hosts = []string{}
 
 	rootCmd.Execute()
 
-	if len(config.hosts) == 0 {
+	if len(config.Hosts) == 0 {
 		fmt.Println("NO HOSTS!")
 		return
 	}
@@ -162,6 +164,7 @@ func main() {
 	resq := make(chan Results)
 
 	r := mux.NewRouter()
+	r.HandleFunc("/api/config/", ConfigHandler)
 	r.HandleFunc("/api/hosts/", HostsHandler)
 	r.HandleFunc("/api/hosts/{hostname}", HostsHandler).Methods("DELETE")
 	r.HandleFunc("/api/data/{hostname}", HostDataHandler)

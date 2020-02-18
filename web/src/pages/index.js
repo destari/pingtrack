@@ -3,6 +3,7 @@ import "rbx/index.css"
 import {Column, Menu} from "rbx";
 import Layout from "../components/layout"
 import DataView from "../components/dataview";
+import Dashboard from "../components/dashboard";
 import Axios from "axios"
 
 class IndexPage extends Component {
@@ -11,7 +12,8 @@ class IndexPage extends Component {
         super(props);
         this.state = {
             hosts: [],
-            selected: ""
+            selected: "",
+            config: {}
         };
         this.dataViewElement = React.createRef()
     }
@@ -30,7 +32,7 @@ class IndexPage extends Component {
          data right away
         */
         this.getHosts();
-        //this.getData();
+        this.getConfig();
 
         /*
           Now we need to make it run at a specified interval,
@@ -89,8 +91,30 @@ class IndexPage extends Component {
                 console.log(error.config);
                 //this.setState({ loading: false, error })
             })
-    }
+    };
 
+    getConfig = () => {
+        let config = {
+            headers: {'Access-Control-Allow-Origin': '*',
+                'Accept': 'application/json'}
+        };
+        Axios
+            .get(`/api/config/`, config)
+            .then(response => {
+                console.log(response.data);
+                this.setState({ config: response.data });
+            })
+            .catch(error => {
+                if (error.response) {
+                    console.log(error.response);
+                } else if (error.request) {
+                    console.log(error.request);
+                } else {
+                    console.log('Error', error.message);
+                }
+                console.log(error.config);
+            })
+    }
 
     render() {
         const setSelected = (hostname) => {
@@ -134,7 +158,7 @@ class IndexPage extends Component {
                         {this.state.selected ? (
                             <DataView host={this.state.selected} ref={this.dataViewElement}> </DataView>
                         ) : (
-                            <p>Select a host from the left menu to see details.</p>
+                            <Dashboard config={this.state.config}/>
                         )}
                     </Column>
                 </Column.Group>

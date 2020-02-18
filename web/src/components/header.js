@@ -11,13 +11,9 @@ export default (props) => (
             <Navbar.Burger />
         </Navbar.Brand>
         <Navbar.Menu>
-            <Navbar.Segment align="start">
-                <Navbar.Item href="/" boxed="true">Home</Navbar.Item>
-            </Navbar.Segment>
-
             <Navbar.Segment align="end">
+                <Navbar.Item href="/" boxed="true">Dashboard</Navbar.Item>
                 <Navbar.Item href="/about/">About</Navbar.Item>
-                <Navbar.Item href="/contact/">Contact</Navbar.Item>
                 <Navbar.Item href="/settings/">Settings</Navbar.Item>
             </Navbar.Segment>
         </Navbar.Menu>
