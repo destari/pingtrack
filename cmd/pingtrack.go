@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -59,7 +60,7 @@ func pingHost(host string) Results {
 
 	pinger.Count = 4
 	pinger.Interval = time.Millisecond*100
-	pinger.Timeout = time.Second*2
+	pinger.Timeout = time.Second*1
 	pinger.SetPrivileged(false)
 
 	pinger.OnFinish = func(stats *ping.Statistics) {
@@ -76,7 +77,6 @@ func pingHost(host string) Results {
 }
 
 func pinger(queue chan string, output chan Results) {
-	fmt.Println("Starting pinger..")
 	for {
 		select {
 		case host := <- queue:
@@ -87,7 +87,7 @@ func pinger(queue chan string, output chan Results) {
 }
 
 func fillQueue(queue chan string) {
-	fmt.Println("Periodic queue filler started")
+	fmt.Println("Periodic queue filler started: Items: ", len(config.Hosts))
 	tick := time.Tick(time.Duration(config.EchoTimes) * time.Second)
 
 	for {
@@ -114,10 +114,36 @@ func resultsReader(resq chan Results) {
 	}
 }
 
+func Hosts(cidr string) ([]string, error) {
+	ips := []string{}
+
+	ip, ipnet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		ips = append(ips, cidr)
+		return ips, nil
+	}
+
+	for ip := ip.Mask(ipnet.Mask); ipnet.Contains(ip); inc(ip) {
+		ips = append(ips, ip.String())
+	}
+	// remove network address and broadcast address
+	return ips[1 : len(ips)-1], nil
+}
+
+func inc(ip net.IP) {
+	for j := len(ip) - 1; j >= 0; j-- {
+		ip[j]++
+		if ip[j] > 0 {
+			break
+		}
+	}
+}
+
 type Config struct {
 	Hosts     []string
 	EchoTimes int
 	PingCount int
+	Threads   int
 }
 
 var config Config
@@ -129,18 +155,24 @@ var rootCmd = &cobra.Command{Use: "pingtrack"}
 
 func init() {
 	var cmdPrint = &cobra.Command{
-		Use:   "hosts [hosts to ping]",
+		Use:   "hosts [list of hosts / CIDRs]",
 		Short: "Pings and tracks the list of hosts.",
-		Long: `Pings and tracks the list of hosts.`,
+		Long: `Pings and tracks the list of hosts. Use commas to separate IPs, CIDRs (192.168.1.0/24)`,
 		Args: cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Hosts: " + strings.Join(args, ", "))
 			//hosts = args
-			config.Hosts = args
+			var tmpHosts []string
+			for _, h := range args {
+				ips, _ := Hosts(h)
+				tmpHosts = append(tmpHosts, ips...)
+			}
+			config.Hosts = tmpHosts
 		},
 	}
 
 	rootCmd.PersistentFlags().IntVarP(&config.EchoTimes, "interval", "i", 10, "Time in seconds between pings")
+	rootCmd.PersistentFlags().IntVarP(&config.Threads, "threads", "t", 50, "Number of threads to run in parallel")
 	rootCmd.PersistentFlags().StringVarP(&serveHost, "bindhost", "H", "127.0.0.1", "Local host/IP to bind web server to")
 	rootCmd.PersistentFlags().StringVarP(&servePort, "bindport", "p", "8080", "Port to bind web server to")
 
@@ -191,7 +223,11 @@ func main() {
 
 	go resultsReader(resq)
 	go fillQueue(c)
-	go pinger(c, resq)
+
+	fmt.Println("Starting pinger threads..")
+	for t := 0; t < config.Threads; t++ {
+		go pinger(c, resq)
+	}
 
 	fmt.Println("Starting HTTP server: " + serveHost+":"+servePort)
 	go log.Fatal(srv.ListenAndServe())
