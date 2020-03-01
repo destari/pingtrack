@@ -105,9 +105,7 @@ func resultsReader(resq chan Results) {
 	for {
 		select {
 		case result := <- resq:
-			host := result.Host
-			result.Host = ""
-			data.Results[host] = append(data.Results[host], result)
+			StoreResult(result)
 		default:
 			time.Sleep(250 * time.Millisecond)
 		}
@@ -151,6 +149,8 @@ var config Config
 var data Data
 var serveHost string
 var servePort string
+var databaseFile string
+var ttl int
 var rootCmd = &cobra.Command{Use: "pingtrack"}
 
 func init() {
@@ -172,9 +172,11 @@ func init() {
 	}
 
 	rootCmd.PersistentFlags().IntVarP(&config.EchoTimes, "interval", "i", 10, "Time in seconds between pings")
+	rootCmd.PersistentFlags().IntVarP(&ttl, "ttl", "e", 30, "Time in days to expire data")
 	rootCmd.PersistentFlags().IntVarP(&config.Threads, "threads", "t", 50, "Number of threads to run in parallel")
 	rootCmd.PersistentFlags().StringVarP(&serveHost, "bindhost", "H", "127.0.0.1", "Local host/IP to bind web server to")
 	rootCmd.PersistentFlags().StringVarP(&servePort, "bindport", "p", "8080", "Port to bind web server to")
+	rootCmd.PersistentFlags().StringVarP(&databaseFile, "database", "D", "pingtrack.db", "Database file name (:memory: for in-memory only")
 
 	rootCmd.AddCommand(cmdPrint)
 }
@@ -188,6 +190,12 @@ func main() {
 		fmt.Println("NO HOSTS!")
 		return
 	}
+
+	err := OpenStore(databaseFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer CloseStore()
 
 	data.Time = time.Now().Unix()
 	data.Results = make(map[string][]Results)

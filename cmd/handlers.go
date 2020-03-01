@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	_ "github.com/destari/pingtrack/cmd/internal/statik"
 )
@@ -38,9 +40,32 @@ func HostDataHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	w.Header().Set("Content-Type", "application/json")
 
+	duration := int64(14400)
+	end := time.Now().Unix()
+	start := end - duration
+
 	if vars["hostname"] != "" {
 		w.WriteHeader(http.StatusOK)
-		jsonResults, _ := json.Marshal(data.Results[vars["hostname"]])
+
+		newStart := r.URL.Query().Get("start")
+		newDuration := r.URL.Query().Get("duration")
+
+		if newStart != "" {
+			s, _ := strconv.Atoi(newStart)
+			start = int64(s)
+
+			end = start + duration
+		}
+
+		if newDuration != "" {
+			e, _ := strconv.Atoi(newDuration)
+			duration = int64(e)
+
+			end = start + duration
+		}
+
+		data := StoreRetrieve(vars["hostname"], start)
+		jsonResults, _ := json.Marshal(data)
 		w.Write(jsonResults)
 	} else {
 		w.WriteHeader(422)

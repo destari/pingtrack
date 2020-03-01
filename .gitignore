@@ -3,3 +3,4 @@
 /cmd/pingtrack
 /cmd/.web_static
 /cmd/handlers
+*.db
