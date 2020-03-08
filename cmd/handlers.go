@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 	"io"
@@ -50,21 +51,23 @@ func HostDataHandler(w http.ResponseWriter, r *http.Request) {
 		newStart := r.URL.Query().Get("start")
 		newDuration := r.URL.Query().Get("duration")
 
+		if newDuration != "" {
+			e, _ := strconv.Atoi(newDuration)
+			duration = int64(e)
+		}
+
 		if newStart != "" {
 			s, _ := strconv.Atoi(newStart)
 			start = int64(s)
 
 			end = start + duration
+		} else {
+			start = end - duration
 		}
 
-		if newDuration != "" {
-			e, _ := strconv.Atoi(newDuration)
-			duration = int64(e)
+		fmt.Println(start, duration)
 
-			end = start + duration
-		}
-
-		data := StoreRetrieve(vars["hostname"], start)
+		data := StoreRetrieve(vars["hostname"], start, duration)
 		jsonResults, _ := json.Marshal(data)
 		w.Write(jsonResults)
 	} else {
