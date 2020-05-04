@@ -22,3 +22,16 @@ In the web app, you can add/remove hosts dynamically.
 
 ## Building
 In order to build, you will need Gatsby installed, then you can run `make` in the `cmd/` directory to build the full static binary.
+
+### Install Gatsby:
+`npm install -g gatsby-cli`
+
+### Install npm packages
+`cd web; npm install`
+
+### Install statik
+`go get github.com/rakyll/statik`
+
+### Build pingtrack
+`cd cmd; make`
+
